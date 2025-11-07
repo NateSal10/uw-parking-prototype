@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UW Smart Parking - Prototype</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .phone-container {
+            width: 375px;
+            height: 812px;
+            background: white;
+            border-radius: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .status-bar {
+            height: 44px;
+            background: #4b2e83;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .screen {
+            display: none;
+            height: calc(100% - 44px);
+            overflow-y: auto;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .header {
+            background: #4b2e83;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .back-btn {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .map-container {
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(180deg, #e8f4f8 0%, #d4e8f0 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .parking-lot {
+            position: absolute;
+            border: 2px solid #333;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .parking-lot:hover {
+            transform: scale(1.05);
+        }
+
+        .lot-available {
+            background: #4ade80;
+        }
+
+        .lot-filling {
+            background: #fbbf24;
+        }
+
+        .lot-full {
+            background: #f87171;
+        }
+
+        .lot-closed {
+            background: #9ca3af;
+            color: white;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px;
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #4b2e83;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: #4b2e83;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #3a2366;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #333;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .info-value {
+            color: #1f2937;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .notification-item {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border-left: 4px solid #4b2e83;
+        }
+
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            background: #4b2e83;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #1f2937;
+        }
+
+        .notification-text {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+
+        .notification-time {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            width: 375px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            padding: 8px 20px;
+            color: #6b7280;
+            transition: color 0.3s;
+        }
+
+        .nav-item.active {
+            color: #4b2e83;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .quick-action-btn {
+            padding: 20px;
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .quick-action-btn:hover {
+            background: #f3f4f6;
+            border-color: #4b2e83;
+        }
+
+        .quick-action-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .quick-action-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .route-map {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, #e8f4f8 0%, #d4e8f0 100%);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .route-line {
+            position: absolute;
+            width: 4px;
+            height: 200px;
+            background: linear-gradient(180deg, #4b2e83 0%, #764ba2 50%, #4ade80 100%);
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+        .route-marker {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: white;
+            border: 3px solid #4b2e83;
+            border-radius: 50%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .route-marker.start {
+            top: 40px;
+            background: #4b2e83;
+        }
+
+        .route-marker.end {
+            bottom: 40px;
+            background: #4ade80;
+        }
+
+        .steps-container {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .step-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .step-item:last-child {
+            border-bottom: none;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            background: #4b2e83;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-text {
+            font-size: 14px;
+            color: #1f2937;
+            margin-bottom: 2px;
+        }
+
+        .step-distance {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .permit-card {
+            background: linear-gradient(135deg, #4b2e83 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .permit-type {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 4px;
+        }
+
+        .permit-name {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .permit-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+
+        .settings-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+
+        .toggle {
+            width: 50px;
+            height: 28px;
+            background: #e5e7eb;
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle.active {
+            background: #4ade80;
+        }
+
+        .toggle-slider {
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: left 0.3s;
+        }
+
+        .toggle.active .toggle-slider {
+            left: 24px;
+        }
+
+        .building-icon {
+            position: absolute;
+            font-size: 24px;
+        }
+
+        .alert-banner {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-icon {
+            font-size: 20px;
+            color: #92400e;
+        }
+
+        .alert-text {
+            flex: 1;
+            font-size: 13px;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span>9:41</span>
+            <span>📶 🔋</span>
+        </div>
+
+        <!-- Screen 1: Home / Map View -->
+        <div class="screen active" id="home-screen">
+            <div class="header">
+                <h1>UW Smart Parking</h1>
+                <p>Real-time parking availability</p>
+            </div>
+
+            <div class="alert-banner">
+                <span class="alert-icon">⚠️</span>
+                <span class="alert-text">E1 Lot closed today for event. Use E18 or W18 instead.</span>
+            </div>
+
+            <div class="map-container">
+                <!-- Parking Lots on Map -->
+                <div class="parking-lot lot-available" style="top: 80px; left: 40px; width: 60px; height: 50px;" onclick="showLotDetail('E1')">
+                    E1<br>45 spots
+                </div>
+                <div class="parking-lot lot-filling" style="top: 80px; left: 120px; width: 60px; height: 50px;" onclick="showLotDetail('C1')">
+                    C1<br>12 spots
+                </div>
+                <div class="parking-lot lot-full" style="top: 80px; left: 200px; width: 60px; height: 50px;" onclick="showLotDetail('N1')">
+                    N1<br>FULL
+                </div>
+                <div class="parking-lot lot-closed" style="top: 150px; left: 40px; width: 60px; height: 50px;">
+                    E18<br>CLOSED
+                </div>
+                <div class="parking-lot lot-available" style="top: 150px; left: 120px; width: 60px; height: 50px;" onclick="showLotDetail('W1')">
+                    W1<br>78 spots
+                </div>
+                <div class="parking-lot lot-filling" style="top: 150px; left: 200px; width: 60px; height: 50px;" onclick="showLotDetail('S1')">
+                    S1<br>8 spots
+                </div>
+                <div class="parking-lot lot-available" style="top: 220px; left: 40px; width: 60px; height: 50px;" onclick="showLotDetail('E5')">
+                    E5<br>92 spots
+                </div>
+                <div class="parking-lot lot-available" style="top: 220px; left: 120px; width: 60px; height: 50px;" onclick="showLotDetail('W18')">
+                    W18<br>156 spots
+                </div>
+                <div class="parking-lot lot-filling" style="top: 220px; left: 200px; width: 60px; height: 50px;" onclick="showLotDetail('C7')">
+                    C7<br>15 spots
+                </div>
+
+                <!-- Campus Buildings -->
+                <span class="building-icon" style="top: 300px; left: 90px;">🏛️</span>
+                <span class="building-icon" style="top: 300px; left: 180px;">🏢</span>
+                <span class="building-icon" style="top: 320px; left: 140px;">🏫</span>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color lot-available"></div>
+                    <span>Available</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color lot-filling"></div>
+                    <span>Filling Up</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color lot-full"></div>
+                    <span>Full</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color lot-closed"></div>
+                    <span>Closed</span>
+                </div>
+            </div>
+
+            <div class="content">
+                <input type="text" class="search-box" placeholder="Where are you going? (e.g., Kane Hall)" onclick="showDestinationScreen()">
+                
+                <div class="quick-actions">
+                    <div class="quick-action-btn" onclick="showRecommendation()">
+                        <div class="quick-action-icon">🎯</div>
+                        <div class="quick-action-label">Find Parking</div>
+                    </div>
+                    <div class="quick-action-btn" onclick="showNavigation()">
+                        <div class="quick-action-icon">🚗</div>
+                        <div class="quick-action-label">Navigate</div>
+                    </div>
+                    <div class="quick-action-btn" onclick="showNotifications()">
+                        <div class="quick-action-icon">🔔</div>
+                        <div class="quick-action-label">Alerts</div>
+                    </div>
+                    <div class="quick-action-btn" onclick="showProfile()">
+                        <div class="quick-action-icon">👤</div>
+                        <div class="quick-action-label">Profile</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen 2: Destination Input -->
+        <div class="screen" id="destination-screen">
+            <div class="header">
+                <button class="back-btn" onclick="showScreen('home-screen')">← Back</button>
+                <h1>Where to?</h1>
+                <p>Enter your destination building</p>
+            </div>
+            <div class="content">
+                <input type="text" class="search-box" placeholder="Search buildings..." value="Kane Hall" style="background: #f9fafb;">
+                
+                <div style="margin-bottom: 20px;">
+                    <h3 style="margin-bottom: 15px; color: #6b7280; font-size: 14px;">RECENT DESTINATIONS</h3>
+                    <div class="card" style="cursor: pointer;" onclick="showRecommendation()">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 24px;">🏛️</span>
+                            <div>
+                                <div style="font-weight: 600;">Kane Hall</div>
+                                <div style="font-size: 12px; color: #6b7280;">Liberal Arts Quadrangle</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card" style="cursor: pointer;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 24px;">🔬</span>
+                            <div>
+                                <div style="font-weight: 600;">Sieg Hall</div>
+                                <div style="font-size: 12px; color: #6b7280;">Engineering Quad</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card" style="cursor: pointer;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 24px;">📚</span>
+                            <div>
+                                <div style="font-weight: 600;">Allen Library</div>
+                                <div style="font-size: 12px; color: #6b7280;">Central Campus</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="showRecommendation()">Find Best Parking →</button>
+            </div>
+        </div>
+
+        <!-- Screen 3: Parking Recommendation -->
+        <div class="screen" id="recommendation-screen">
+            <div class="header">
+                <button class="back-btn" onclick="showScreen('home-screen')">← Back</button>
+                <h1>Best Option</h1>
+                <p>Based on your destination</p>
+            </div>
+            <div class="content">
+                <div class="card" style="border: 2px solid #4b2e83; background: linear-gradient(135deg, #f9fafb 0%, #e8f4f8 100%);">
+                    <div class="card-header">
+                        <div class="card-title">W1 Parking Lot</div>
+                        <span class="badge badge-success">78 spots</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Walk to Kane Hall</span>
+                        <span class="info-value">4 min (0.2 mi)</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Permit Type</span>
+                        <span class="info-value">✅ Student E</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Accessibility</span>
+                        <span class="info-value">♿ 3 ADA spots</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Current Time</span>
+                        <span class="info-value">9:47 AM</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="showNavigation()">Start Navigation 🗺️</button>
+
+                <h3 style="margin: 25px 0 15px 0; color: #6b7280; font-size: 14px;">OTHER OPTIONS</h3>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">E1 Parking Lot</div>
+                        <span class="badge badge-success">45 spots</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Walk to Kane Hall</span>
+                        <span class="info-value">6 min (0.3 mi)</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Permit Type</span>
+                        <span class="info-value">✅ Student E</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">W18 Parking Lot + Shuttle</div>
+                        <span class="badge badge-success">156 spots</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Total Time to Kane Hall</span>
+                        <span class="info-value">12 min (shuttle + walk)</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Next Shuttle</span>
+                        <span class="info-value">🚌 3 min away</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen 4: Navigation -->
+        <div class="screen" id="navigation-screen">
+            <div class="header">
+                <button class="back-btn" onclick="showScreen('recommendation-screen')">← Back</button>
+                <h1>Navigation to W1</h1>
+                <p>Follow directions below</p>
+            </div>
+            <div class="content">
+                <div class="route-map">
+                    <div class="route-line"></div>
+                    <div class="route-marker start"></div>
+                    <div class="route-marker end"></div>
+                    <div style="position: absolute; top: 30px; font-size: 14px; font-weight: 600; color: #4b2e83;">Your Location</div>
+                    <div style="position: absolute; bottom: 30px; font-size: 14px; font-weight: 600; color: #059669;">W1 Parking Lot</div>
+                </div>
+
+                <div class="card" style="background: #4b2e83; color: white; text-align: center;">
+                    <div style="font-size: 48px; font-weight: 700; margin-bottom: 5px;">0.7 mi</div>
+                    <div style="font-size: 18px; opacity: 0.9;">3 min drive</div>
+                </div>
+
+                <div class="steps-container">
+                    <div class="step-item">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-text">Head northeast on NE 45th St</div>
+                            <div class="step-distance">0.2 mi</div>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-text">Turn right onto 15th Ave NE</div>
+                            <div class="step-distance">0.3 mi</div>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-text">Turn left at Memorial Way NE</div>
+                            <div class="step-distance">0.1 mi</div>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <div class="step-text">Arrive at W1 Parking Lot (left side)</div>
+                            <div class="step-distance">Destination</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" style="margin-top: 15px;">Open in Google Maps 📍</button>
+            </div>
+        </div>
+
+        <!-- Screen 5: Lot Detail -->
+        <div class="screen" id="lot-detail-screen">
+            <div class="header">
+                <button class="back-btn" onclick="showScreen('home-screen')">← Back</button>
+                <h1>W1 Parking Lot</h1>
+                <p>West Campus</p>
+            </div>
+            <div class="content">
+                <div class="card" style="background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); color: white;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 64px; font-weight: 700; margin-bottom: 5px;">78</div>
+                        <div style="font-size: 20px; opacity: 0.95;">spots available</div>
+                        <div style="font-size: 14px; opacity: 0.85; margin-top: 8px;">Updated 2 min ago</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 15px; font-size: 16px;">Lot Information</h3>
+                    <div class="info-row">
+                        <span class="info-label">Total Capacity</span>
+                        <span class="info-value">220 spaces</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Current Occupancy</span>
+                        <span class="info-value">64% (142/220)</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">ADA Spots Available</span>
+                        <span class="info-value">♿ 3 of 8</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">EV Charging</span>
+                        <span class="info-value">⚡ 2 stations</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Shuttle Stop</span>
+                        <span class="info-value">✅ Yes</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 15px; font-size: 16px;">Permitted Groups</h3>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <span class="badge badge-success">Student E</span>
+                        <span class="badge badge-success">Staff</span>
+                        <span class="badge badge-success">Faculty</span>
+                        <span class="badge badge-success">Visitor</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 15px; font-size: 16px;">Typical Availability</h3>
+                    <div style="font-size: 13px; color: #6b7280; line-height: 1.6;">
+                        <div style="margin-bottom: 8px;"><strong>8-10 AM:</strong> Usually fills up quickly</div>
+                        <div style="margin-bottom: 8px;"><strong>10 AM-2 PM:</strong> Typically at capacity</div>
+                        <div style="margin-bottom: 8px;"><strong>2-5 PM:</strong> Spots start opening up</div>
+                        <div><strong>After 5 PM:</strong> Usually plenty of space</div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="showRecommendation()">Park Here 🅿️</button>
+            </div>
+        </div>
+
+        <!-- Screen 6: Notifications -->
+        <div class="screen" id="notifications-screen">
+            <div class="header">
+                <button class="back-btn" onclick="showScreen('home-screen')">← Back</button>
+                <h1>Notifications</h1>
+                <p>Stay updated on parking</p>
+            </div>
+            <div class="content">
+                <div class="notification-item">
+                    <div class="notification-icon">⚠️</div>
+                    <div class="notification-content">
+                        <div class="notification-title">Lot Closure Alert</div>
+                        <div class="notification-text">E18 Lot will be closed today from 8 AM - 6 PM for a campus event. Use E1 or W18 as alternatives.</div>
+                        <div class="notification-time">Today, 7:30 AM</div>
+                    </div>
+                </div>
+
+                <div class="notification-item">
+                    <div class="notification-icon">📊</div>
+                    <div class="notification-content">
+                        <div class="notification-title">High Demand Warning</div>
+                        <div class="notification-text">Your usual lot (C1) is filling up quickly. Consider arriving early or using W1 instead.</div>
+                        <div class="notification-time">Today, 9:15 AM</div>
+                    </div>
+                </div>
+
+                <div class="notification-item">
+                    <div class="notification-icon">🚌</div>
+                    <div class="notification-content">
+                        <div class="notification-title">Shuttle Update</div>
+                        <div class="notification-text">W18 shuttle running on schedule. Next arrival at your stop in 5 minutes.</div>
+                        <div class="notification-time">Today, 9:42 AM</div>
+                    </div>
+                </div>
+
+                <div class="notification-item">
+                    <div class="notification-icon">✅</div>
+                    <div class="notification-content">
+                        <div class="notification-title">Spots Now Available</div>
+                        <div class="notification-text">E1 Lot now has 45+ spots available. Good time to head to campus!</div>
+                        <div class="notification-time">Today, 8:50 AM</div>
+                    </div>
+                </div>
+
+                <div class="notification-item">
+                    <div class="notification-icon">🏗️</div>
+                    <div class="notification-content">
+                        <div class="notification-title">Construction Notice</div>
+                        <div class="notification-text">S1 Lot will have reduced capacity (50 spots) next week due to maintenance work.</div>
+                        <div class="notification-time">Yesterday, 4:20 PM</div>
+                    </div>
+                </div>
+
+                <div class="notification-item">
+                    <div class="notification-icon">🎓</div>
+                    <div class="notification-content">
+                        <div class="notification-title">Event Parking Info</div>
+                        <div class="notification-text">Football game this Saturday. Reserve parking opens Monday at 9 AM. Campus lots will have restricted access 2-6 PM.</div>
+                        <div class="notification-time">2 days ago</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen 7: Profile -->
+        <div class="screen" id="profile-screen">
+            <div class="header">
+                <button class="back-btn" onclick="showScreen('home-screen')">← Back</button>
+                <h1>My Profile</h1>
+                <p>Parking preferences & info</p>
+            </div>
+            <div class="content">
+                <div class="permit-card">
+                    <div class="permit-type">PERMIT TYPE</div>
+                    <div class="permit-name">Student E Permit</div>
+                    <div class="permit-info">
+                        <div>
+                            <div style="opacity: 0.8; font-size: 12px; margin-bottom: 2px;">Expires</div>
+                            <div style="font-weight: 600;">March 31, 2026</div>
+                        </div>
+                        <div>
+                            <div style="opacity: 0.8; font-size: 12px; margin-bottom: 2px;">Valid In</div>
+                            <div style="font-weight: 600;">E & W Lots</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 15px; font-size: 16px;">Saved Destinations</h3>
+                    <div class="info-row">
+                        <span class="info-label">📍 Primary Building</span>
+                        <span class="info-value">Kane Hall</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">🅿️ Preferred Lot</span>
+                        <span class="info-value">W1</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">🕐 Typical Arrival</span>
+                        <span class="info-value">9:30-10:00 AM</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 15px; font-size: 16px;">Notification Settings</h3>
+                    <div class="settings-item">
+                        <span style="font-size: 14px;">Lot closure alerts</span>
+                        <div class="toggle active" onclick="this.classList.toggle('active')">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                    <div class="settings-item">
+                        <span style="font-size: 14px;">High demand warnings</span>
+                        <div class="toggle active" onclick="this.classList.toggle('active')">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                    <div class="settings-item">
+                        <span style="font-size: 14px;">Spot availability updates</span>
+                        <div class="toggle active" onclick="this.classList.toggle('active')">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                    <div class="settings-item">
+                        <span style="font-size: 14px;">Event parking notices</span>
+                        <div class="toggle active" onclick="this.classList.toggle('active')">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                    <div class="settings-item">
+                        <span style="font-size: 14px;">Construction updates</span>
+                        <div class="toggle" onclick="this.classList.toggle('active')">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 15px; font-size: 16px;">Accessibility</h3>
+                    <div class="settings-item">
+                        <span style="font-size: 14px;">Show ADA spots only</span>
+                        <div class="toggle" onclick="this.classList.toggle('active')">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                    <div class="settings-item">
+                        <span style="font-size: 14px;">Prioritize covered parking</span>
+                        <div class="toggle" onclick="this.classList.toggle('active')">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                    <div class="settings-item">
+                        <span style="font-size: 14px;">Include shuttle options</span>
+                        <div class="toggle active" onclick="this.classList.toggle('active')">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-secondary" style="margin-top: 20px;">Edit Profile</button>
+                <button class="btn btn-secondary">Help & Support</button>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation Bar -->
+        <div class="nav-bar">
+            <div class="nav-item active" onclick="showScreen('home-screen')">
+                <div class="nav-icon">🗺️</div>
+                <div class="nav-label">Map</div>
+            </div>
+            <div class="nav-item" onclick="showDestinationScreen()">
+                <div class="nav-icon">🎯</div>
+                <div class="nav-label">Find</div>
+            </div>
+            <div class="nav-item" onclick="showNotifications()">
+                <div class="nav-icon">🔔</div>
+                <div class="nav-label">Alerts</div>
+            </div>
+            <div class="nav-item" onclick="showProfile()">
+                <div class="nav-icon">👤</div>
+                <div class="nav-label">Profile</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showScreen(screenId) {
+            // Hide all screens
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            
+            // Show selected screen
+            document.getElementById(screenId).classList.add('active');
+            
+            // Update nav bar
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Scroll to top
+            document.getElementById(screenId).scrollTop = 0;
+        }
+
+        function showDestinationScreen() {
+            showScreen('destination-screen');
+        }
+
+        function showRecommendation() {
+            showScreen('recommendation-screen');
+        }
+
+        function showNavigation() {
+            showScreen('navigation-screen');
+        }
+
+        function showLotDetail(lotName) {
+            showScreen('lot-detail-screen');
+        }
+
+        function showNotifications() {
+            showScreen('notifications-screen');
+        }
+
+        function showProfile() {
+            showScreen('profile-screen');
+        }
+    </script>
+</body>
+</html>
