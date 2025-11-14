@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UW Smart Parking - Prototype</title>
+    <title>UW Smart Parking - Prototype v2 (Improved)</title>
     <style>
         * {
             margin: 0;
@@ -57,6 +57,7 @@
             color: white;
             padding: 20px;
             text-align: center;
+            position: relative;
         }
 
         .header h1 {
@@ -80,6 +81,32 @@
             border-radius: 20px;
             cursor: pointer;
             font-size: 14px;
+        }
+
+        /* NEW: Last Updated Timestamp */
+        .last-updated {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin: 15px 15px 0 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #065f46;
+        }
+
+        .last-updated-icon {
+            font-size: 16px;
+        }
+
+        .last-updated-text {
+            flex: 1;
+        }
+
+        .last-updated-time {
+            font-weight: 600;
         }
 
         .map-container {
@@ -125,25 +152,57 @@
             color: white;
         }
 
+        /* NEW: Enhanced Legend with Descriptions */
         .legend {
-            display: flex;
-            justify-content: space-around;
             padding: 15px;
             background: white;
             border-bottom: 1px solid #e5e7eb;
         }
 
+        .legend-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
         .legend-item {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 8px;
-            font-size: 12px;
         }
 
         .legend-color {
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             border-radius: 4px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .legend-details {
+            flex: 1;
+        }
+
+        .legend-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 2px;
+        }
+
+        .legend-description {
+            font-size: 11px;
+            color: #6b7280;
+            line-height: 1.3;
         }
 
         .content {
@@ -210,6 +269,54 @@
             font-size: 18px;
             font-weight: 600;
             color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* NEW: Tooltip/Help Icon */
+        .help-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            background: #e5e7eb;
+            border-radius: 50%;
+            font-size: 12px;
+            cursor: help;
+            position: relative;
+            color: #6b7280;
+        }
+
+        .help-icon:hover .tooltip {
+            display: block;
+        }
+
+        .tooltip {
+            display: none;
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #1f2937;
         }
 
         .badge {
@@ -217,6 +324,9 @@
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .badge-success {
@@ -237,6 +347,7 @@
         .info-row {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             padding: 8px 0;
             border-bottom: 1px solid #f3f4f6;
         }
@@ -248,12 +359,128 @@
         .info-label {
             color: #6b7280;
             font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .info-value {
             color: #1f2937;
             font-weight: 600;
             font-size: 14px;
+        }
+
+        /* NEW: Confirmation Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            width: 320px;
+            max-width: 90%;
+            box-shadow: 0 20px 25px rgba(0,0,0,0.3);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 12px;
+        }
+
+        .modal-content {
+            font-size: 14px;
+            color: #6b7280;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .modal-btn-cancel {
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .modal-btn-confirm {
+            background: #4b2e83;
+            color: white;
+        }
+
+        /* NEW: Error State UI */
+        .error-banner {
+            background: #fee2e2;
+            border: 1px solid #f87171;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .error-icon {
+            font-size: 20px;
+            color: #991b1b;
+            flex-shrink: 0;
+        }
+
+        .error-content {
+            flex: 1;
+        }
+
+        .error-title {
+            font-weight: 600;
+            color: #991b1b;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .error-text {
+            font-size: 13px;
+            color: #991b1b;
+            margin-bottom: 8px;
+        }
+
+        .error-action {
+            display: inline-block;
+            background: #991b1b;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
         }
 
         .notification-item {
@@ -534,7 +761,7 @@
             border: 1px solid #fbbf24;
             border-radius: 8px;
             padding: 12px;
-            margin-bottom: 15px;
+            margin: 0 15px 15px 15px;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -550,6 +777,134 @@
             font-size: 13px;
             color: #92400e;
         }
+
+        /* NEW: Onboarding/Help Screen */
+        .onboarding-screen {
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .onboarding-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .onboarding-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 12px;
+        }
+
+        .onboarding-text {
+            font-size: 16px;
+            color: #6b7280;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .feature-list {
+            text-align: left;
+            margin-bottom: 30px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .feature-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .feature-content {
+            flex: 1;
+        }
+
+        .feature-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .feature-description {
+            font-size: 14px;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+
+        .faq-section {
+            margin-top: 30px;
+        }
+
+        .faq-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .faq-item {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .faq-question {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .faq-answer {
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.5;
+        }
+
+        /* NEW: Lot Type Tags */
+        .lot-type-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #e5e7eb;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #4b5563;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+
+        .lot-type-tag.central {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .lot-type-tag.peripheral {
+            background: #fce7f3;
+            color: #9f1239;
+        }
+
+        /* Improved settings visibility */
+        .settings-section {
+            margin-bottom: 25px;
+        }
+
+        .settings-section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
@@ -560,45 +915,193 @@
             <span>📶 🔋</span>
         </div>
 
-        <!-- Screen 1: Home / Map View -->
-        <div class="screen active" id="home-screen">
+        <!-- NEW: Onboarding/Welcome Screen -->
+        <div class="screen" id="onboarding-screen">
+            <div class="header">
+                <h1>Welcome to UW Parking</h1>
+                <p>Your smart parking assistant</p>
+            </div>
+            <div class="onboarding-screen">
+                <div class="onboarding-icon">🅿️</div>
+                <div class="onboarding-title">Find Parking Faster</div>
+                <div class="onboarding-text">
+                    Never waste time circling for spots again. Get real-time availability and smart recommendations.
+                </div>
+
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div class="feature-icon">🗺️</div>
+                        <div class="feature-content">
+                            <div class="feature-title">Live Availability Map</div>
+                            <div class="feature-description">See which lots have open spots right now, updated every 2 minutes</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🎯</div>
+                        <div class="feature-content">
+                            <div class="feature-title">Smart Recommendations</div>
+                            <div class="feature-description">Get personalized parking suggestions based on your destination and permit</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🔔</div>
+                        <div class="feature-content">
+                            <div class="feature-title">Proactive Alerts</div>
+                            <div class="feature-description">Stay informed about closures, events, and availability changes</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🚗</div>
+                        <div class="feature-content">
+                            <div class="feature-title">Turn-by-Turn Navigation</div>
+                            <div class="feature-description">Get directions straight to your selected parking lot</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="showScreen('home-screen')">Get Started →</button>
+                <button class="btn btn-secondary" onclick="showScreen('help-screen')">View Help & FAQs</button>
+            </div>
+        </div>
+
+        <!-- NEW: Help & FAQ Screen -->
+        <div class="screen" id="help-screen">
+            <div class="header">
+                <button class="back-btn" onclick="showScreen('onboarding-screen')">← Back</button>
+                <h1>Help & FAQs</h1>
+                <p>Everything you need to know</p>
+            </div>
+            <div class="content">
+                <div class="faq-section">
+                    <div class="faq-title">Understanding the Map</div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">What do the colors mean?</div>
+                        <div class="faq-answer">
+                            <strong>Green:</strong> Plenty of spots available (20+ spaces)<br>
+                            <strong>Yellow:</strong> Filling up fast (5-19 spaces)<br>
+                            <strong>Red:</strong> Full or nearly full (0-4 spaces)<br>
+                            <strong>Gray:</strong> Closed for events or maintenance
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">What's the difference between Central and Peripheral lots?</div>
+                        <div class="faq-answer">
+                            <strong>Central Lots:</strong> Located near core academic buildings, shorter walk times, fill up quickly (E1, C1, N1, S1)<br><br>
+                            <strong>Peripheral Lots:</strong> Located on campus edges, often have more availability, shuttle service available (W18, E5)
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">How often is the data updated?</div>
+                        <div class="faq-answer">
+                            Parking availability is updated every 2 minutes using sensors at lot entrances. Look for the "Last Updated" timestamp on the map screen.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-section">
+                    <div class="faq-title">About Permits & Parking</div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">What is a Student E Permit?</div>
+                        <div class="faq-answer">
+                            Student E permits allow parking in E-designated and W-designated lots. Valid Monday-Friday, 7 AM - 5 PM. Can be purchased quarterly from UW Transportation Services.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">What does ADA mean?</div>
+                        <div class="faq-answer">
+                            ADA stands for Americans with Disabilities Act. ADA spots are accessible parking spaces reserved for people with disability permits. They're wider and located close to entrances.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">What is EV Charging?</div>
+                        <div class="faq-answer">
+                            EV (Electric Vehicle) charging stations allow you to charge your electric or hybrid car while parked. Some lots have Level 2 chargers available on a first-come, first-served basis.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-section">
+                    <div class="faq-title">Using the App</div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">How do I find parking for my class?</div>
+                        <div class="faq-answer">
+                            Tap "Find Parking" on the home screen, enter your building name (e.g., Kane Hall), and we'll recommend the best available lots based on walking distance and your permit type.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">What if my usual lot is full?</div>
+                        <div class="faq-answer">
+                            The app will suggest alternative nearby lots automatically. You can also check the map to see all available options with color-coded availability.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">Can I get alerts about my favorite lot?</div>
+                        <div class="faq-answer">
+                            Yes! Go to Profile → Notification Settings and enable "High demand warnings" and "Spot availability updates" to get notified about your preferred lots.
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="showScreen('home-screen')">Start Using App →</button>
+            </div>
+        </div>
+
+        <!-- Screen 1: Home / Map View (IMPROVED) -->
+        <div class="screen" id="home-screen">
             <div class="header">
                 <h1>UW Smart Parking</h1>
                 <p>Real-time parking availability</p>
             </div>
 
+            <!-- NEW: Last Updated Timestamp -->
+            <div class="last-updated">
+                <span class="last-updated-icon">🔄</span>
+                <span class="last-updated-text">
+                    Last updated: <span class="last-updated-time">2 min ago (9:45 AM)</span>
+                </span>
+            </div>
+
             <div class="alert-banner">
                 <span class="alert-icon">⚠️</span>
-                <span class="alert-text">E1 Lot closed today for event. Use E18 or W18 instead.</span>
+                <span class="alert-text">E18 Lot closed today for event. Use E1 or W18 instead.</span>
             </div>
 
             <div class="map-container">
-                <!-- Parking Lots on Map -->
-                <div class="parking-lot lot-available" style="top: 80px; left: 40px; width: 60px; height: 50px;" onclick="showLotDetail('E1')">
+                <!-- Parking Lots on Map with lot type indicators -->
+                <div class="parking-lot lot-available" style="top: 80px; left: 40px; width: 60px; height: 50px;" onclick="showLotConfirmation('E1', 'Central')">
                     E1<br>45 spots
                 </div>
-                <div class="parking-lot lot-filling" style="top: 80px; left: 120px; width: 60px; height: 50px;" onclick="showLotDetail('C1')">
+                <div class="parking-lot lot-filling" style="top: 80px; left: 120px; width: 60px; height: 50px;" onclick="showLotConfirmation('C1', 'Central')">
                     C1<br>12 spots
                 </div>
-                <div class="parking-lot lot-full" style="top: 80px; left: 200px; width: 60px; height: 50px;" onclick="showLotDetail('N1')">
+                <div class="parking-lot lot-full" style="top: 80px; left: 200px; width: 60px; height: 50px;" onclick="showErrorDemo()">
                     N1<br>FULL
                 </div>
                 <div class="parking-lot lot-closed" style="top: 150px; left: 40px; width: 60px; height: 50px;">
                     E18<br>CLOSED
                 </div>
-                <div class="parking-lot lot-available" style="top: 150px; left: 120px; width: 60px; height: 50px;" onclick="showLotDetail('W1')">
+                <div class="parking-lot lot-available" style="top: 150px; left: 120px; width: 60px; height: 50px;" onclick="showLotConfirmation('W1', 'Central')">
                     W1<br>78 spots
                 </div>
-                <div class="parking-lot lot-filling" style="top: 150px; left: 200px; width: 60px; height: 50px;" onclick="showLotDetail('S1')">
+                <div class="parking-lot lot-filling" style="top: 150px; left: 200px; width: 60px; height: 50px;" onclick="showLotConfirmation('S1', 'Central')">
                     S1<br>8 spots
                 </div>
-                <div class="parking-lot lot-available" style="top: 220px; left: 40px; width: 60px; height: 50px;" onclick="showLotDetail('E5')">
+                <div class="parking-lot lot-available" style="top: 220px; left: 40px; width: 60px; height: 50px;" onclick="showLotConfirmation('E5', 'Peripheral')">
                     E5<br>92 spots
                 </div>
-                <div class="parking-lot lot-available" style="top: 220px; left: 120px; width: 60px; height: 50px;" onclick="showLotDetail('W18')">
+                <div class="parking-lot lot-available" style="top: 220px; left: 120px; width: 60px; height: 50px;" onclick="showLotConfirmation('W18', 'Peripheral')">
                     W18<br>156 spots
                 </div>
-                <div class="parking-lot lot-filling" style="top: 220px; left: 200px; width: 60px; height: 50px;" onclick="showLotDetail('C7')">
+                <div class="parking-lot lot-filling" style="top: 220px; left: 200px; width: 60px; height: 50px;" onclick="showLotConfirmation('C7', 'Central')">
                     C7<br>15 spots
                 </div>
 
@@ -608,22 +1111,38 @@
                 <span class="building-icon" style="top: 320px; left: 140px;">🏫</span>
             </div>
 
+            <!-- NEW: Enhanced Legend with Descriptions -->
             <div class="legend">
-                <div class="legend-item">
-                    <div class="legend-color lot-available"></div>
-                    <span>Available</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color lot-filling"></div>
-                    <span>Filling Up</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color lot-full"></div>
-                    <span>Full</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color lot-closed"></div>
-                    <span>Closed</span>
+                <div class="legend-title">Map Legend</div>
+                <div class="legend-grid">
+                    <div class="legend-item">
+                        <div class="legend-color lot-available"></div>
+                        <div class="legend-details">
+                            <div class="legend-label">Available</div>
+                            <div class="legend-description">20+ open spots</div>
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color lot-filling"></div>
+                        <div class="legend-details">
+                            <div class="legend-label">Filling Up</div>
+                            <div class="legend-description">5-19 spots left</div>
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color lot-full"></div>
+                        <div class="legend-details">
+                            <div class="legend-label">Full</div>
+                            <div class="legend-description">0-4 spots remaining</div>
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color lot-closed"></div>
+                        <div class="legend-details">
+                            <div class="legend-label">Closed</div>
+                            <div class="legend-description">Unavailable today</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -643,10 +1162,26 @@
                         <div class="quick-action-icon">🔔</div>
                         <div class="quick-action-label">Alerts</div>
                     </div>
-                    <div class="quick-action-btn" onclick="showProfile()">
-                        <div class="quick-action-icon">👤</div>
-                        <div class="quick-action-label">Profile</div>
+                    <div class="quick-action-btn" onclick="showScreen('help-screen')">
+                        <div class="quick-action-icon">❓</div>
+                        <div class="quick-action-label">Help</div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NEW: Confirmation Modal -->
+        <div class="modal-overlay" id="confirmation-modal">
+            <div class="modal">
+                <div class="modal-title">Navigate to <span id="modal-lot-name"></span>?</div>
+                <div class="modal-content">
+                    This is a <strong><span id="modal-lot-type"></span> Lot</strong>. It currently has spots available and is valid for your Student E Permit.
+                    <br><br>
+                    Start navigation to this lot?
+                </div>
+                <div class="modal-actions">
+                    <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Cancel</button>
+                    <button class="modal-btn modal-btn-confirm" onclick="confirmNavigation()">Yes, Navigate</button>
                 </div>
             </div>
         </div>
@@ -696,7 +1231,7 @@
             </div>
         </div>
 
-        <!-- Screen 3: Parking Recommendation -->
+        <!-- Screen 3: Parking Recommendation (IMPROVED with tooltips) -->
         <div class="screen" id="recommendation-screen">
             <div class="header">
                 <button class="back-btn" onclick="showScreen('home-screen')">← Back</button>
@@ -706,7 +1241,10 @@
             <div class="content">
                 <div class="card" style="border: 2px solid #4b2e83; background: linear-gradient(135deg, #f9fafb 0%, #e8f4f8 100%);">
                     <div class="card-header">
-                        <div class="card-title">W1 Parking Lot</div>
+                        <div class="card-title">
+                            W1 Parking Lot
+                            <span class="lot-type-tag central">Central</span>
+                        </div>
                         <span class="badge badge-success">78 spots</span>
                     </div>
                     <div class="info-row">
@@ -714,11 +1252,21 @@
                         <span class="info-value">4 min (0.2 mi)</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">Permit Type</span>
+                        <span class="info-label">
+                            Permit Type
+                            <span class="help-icon">?
+                                <span class="tooltip">Student E permits are valid in E and W designated lots</span>
+                            </span>
+                        </span>
                         <span class="info-value">✅ Student E</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">Accessibility</span>
+                        <span class="info-label">
+                            Accessibility
+                            <span class="help-icon">?
+                                <span class="tooltip">ADA spots are wider accessible spaces near entrances</span>
+                            </span>
+                        </span>
                         <span class="info-value">♿ 3 ADA spots</span>
                     </div>
                     <div class="info-row">
@@ -727,13 +1275,16 @@
                     </div>
                 </div>
 
-                <button class="btn btn-primary" onclick="showNavigation()">Start Navigation 🗺️</button>
+                <button class="btn btn-primary" onclick="showLotConfirmation('W1', 'Central')">Start Navigation 🗺️</button>
 
                 <h3 style="margin: 25px 0 15px 0; color: #6b7280; font-size: 14px;">OTHER OPTIONS</h3>
 
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title">E1 Parking Lot</div>
+                        <div class="card-title">
+                            E1 Parking Lot
+                            <span class="lot-type-tag central">Central</span>
+                        </div>
                         <span class="badge badge-success">45 spots</span>
                     </div>
                     <div class="info-row">
@@ -748,7 +1299,13 @@
 
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title">W18 Parking Lot + Shuttle</div>
+                        <div class="card-title">
+                            W18 Parking Lot + Shuttle
+                            <span class="lot-type-tag peripheral">Peripheral</span>
+                            <span class="help-icon">?
+                                <span class="tooltip">Peripheral lots are on campus edges with shuttle service</span>
+                            </span>
+                        </div>
                         <span class="badge badge-success">156 spots</span>
                     </div>
                     <div class="info-row">
@@ -819,12 +1376,12 @@
             </div>
         </div>
 
-        <!-- Screen 5: Lot Detail -->
+        <!-- Screen 5: Lot Detail (IMPROVED with more tooltips) -->
         <div class="screen" id="lot-detail-screen">
             <div class="header">
                 <button class="back-btn" onclick="showScreen('home-screen')">← Back</button>
                 <h1>W1 Parking Lot</h1>
-                <p>West Campus</p>
+                <p>West Campus - Central</p>
             </div>
             <div class="content">
                 <div class="card" style="background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); color: white;">
@@ -846,11 +1403,21 @@
                         <span class="info-value">64% (142/220)</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">ADA Spots Available</span>
+                        <span class="info-label">
+                            ADA Spots Available
+                            <span class="help-icon">?
+                                <span class="tooltip">ADA = Americans with Disabilities Act accessible spaces</span>
+                            </span>
+                        </span>
                         <span class="info-value">♿ 3 of 8</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">EV Charging</span>
+                        <span class="info-label">
+                            EV Charging
+                            <span class="help-icon">?
+                                <span class="tooltip">EV = Electric Vehicle charging stations (Level 2)</span>
+                            </span>
+                        </span>
                         <span class="info-value">⚡ 2 stations</span>
                     </div>
                     <div class="info-row">
@@ -879,7 +1446,69 @@
                     </div>
                 </div>
 
-                <button class="btn btn-primary" onclick="showRecommendation()">Park Here 🅿️</button>
+                <button class="btn btn-primary" onclick="showLotConfirmation('W1', 'Central')">Navigate Here 🅿️</button>
+            </div>
+        </div>
+
+        <!-- NEW: Error State Demo Screen -->
+        <div class="screen" id="error-screen">
+            <div class="header">
+                <button class="back-btn" onclick="showScreen('home-screen')">← Back</button>
+                <h1>Parking Update</h1>
+                <p>Real-time information</p>
+            </div>
+            <div class="content">
+                <!-- NEW: Error Banner with Alternative Suggestions -->
+                <div class="error-banner">
+                    <div class="error-icon">⚠️</div>
+                    <div class="error-content">
+                        <div class="error-title">N1 Lot Just Filled Up</div>
+                        <div class="error-text">
+                            This lot became full while you were navigating. Don't worry—we found nearby alternatives for you!
+                        </div>
+                        <button class="error-action" onclick="showRecommendation()">View Alternatives</button>
+                    </div>
+                </div>
+
+                <h3 style="margin: 20px 0 15px 0; color: #1f2937; font-size: 16px; font-weight: 600;">Available Nearby Lots</h3>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            C1 Parking Lot
+                            <span class="lot-type-tag central">Central</span>
+                        </div>
+                        <span class="badge badge-warning">12 spots</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Distance from N1</span>
+                        <span class="info-value">2 min walk</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Permit Type</span>
+                        <span class="info-value">✅ Your permit works</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            E1 Parking Lot
+                            <span class="lot-type-tag central">Central</span>
+                        </div>
+                        <span class="badge badge-success">45 spots</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Distance from N1</span>
+                        <span class="info-value">4 min walk</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Permit Type</span>
+                        <span class="info-value">✅ Your permit works</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="showScreen('home-screen')">Return to Map</button>
             </div>
         </div>
 
@@ -947,7 +1576,7 @@
             </div>
         </div>
 
-        <!-- Screen 7: Profile -->
+        <!-- Screen 7: Profile (IMPROVED with better organization) -->
         <div class="screen" id="profile-screen">
             <div class="header">
                 <button class="back-btn" onclick="showScreen('home-screen')">← Back</button>
@@ -986,70 +1615,81 @@
                     </div>
                 </div>
 
-                <div class="card">
-                    <h3 style="margin-bottom: 15px; font-size: 16px;">Notification Settings</h3>
-                    <div class="settings-item">
-                        <span style="font-size: 14px;">Lot closure alerts</span>
-                        <div class="toggle active" onclick="this.classList.toggle('active')">
-                            <div class="toggle-slider"></div>
+                <!-- NEW: Better organized settings sections -->
+                <div class="settings-section">
+                    <div class="settings-section-title">Critical Alerts</div>
+                    <div class="card" style="padding: 0;">
+                        <div class="settings-item">
+                            <span style="font-size: 14px;">Lot closure alerts</span>
+                            <div class="toggle active" onclick="this.classList.toggle('active')">
+                                <div class="toggle-slider"></div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="settings-item">
-                        <span style="font-size: 14px;">High demand warnings</span>
-                        <div class="toggle active" onclick="this.classList.toggle('active')">
-                            <div class="toggle-slider"></div>
+                        <div class="settings-item">
+                            <span style="font-size: 14px;">High demand warnings</span>
+                            <div class="toggle active" onclick="this.classList.toggle('active')">
+                                <div class="toggle-slider"></div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="settings-item">
-                        <span style="font-size: 14px;">Spot availability updates</span>
-                        <div class="toggle active" onclick="this.classList.toggle('active')">
-                            <div class="toggle-slider"></div>
-                        </div>
-                    </div>
-                    <div class="settings-item">
-                        <span style="font-size: 14px;">Event parking notices</span>
-                        <div class="toggle active" onclick="this.classList.toggle('active')">
-                            <div class="toggle-slider"></div>
-                        </div>
-                    </div>
-                    <div class="settings-item">
-                        <span style="font-size: 14px;">Construction updates</span>
-                        <div class="toggle" onclick="this.classList.toggle('active')">
-                            <div class="toggle-slider"></div>
+                        <div class="settings-item">
+                            <span style="font-size: 14px;">Event parking notices</span>
+                            <div class="toggle active" onclick="this.classList.toggle('active')">
+                                <div class="toggle-slider"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <h3 style="margin-bottom: 15px; font-size: 16px;">Accessibility</h3>
-                    <div class="settings-item">
-                        <span style="font-size: 14px;">Show ADA spots only</span>
-                        <div class="toggle" onclick="this.classList.toggle('active')">
-                            <div class="toggle-slider"></div>
+                <div class="settings-section">
+                    <div class="settings-section-title">Optional Updates</div>
+                    <div class="card" style="padding: 0;">
+                        <div class="settings-item">
+                            <span style="font-size: 14px;">Spot availability updates</span>
+                            <div class="toggle active" onclick="this.classList.toggle('active')">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+                        <div class="settings-item">
+                            <span style="font-size: 14px;">Construction updates</span>
+                            <div class="toggle" onclick="this.classList.toggle('active')">
+                                <div class="toggle-slider"></div>
+                            </div>
                         </div>
                     </div>
-                    <div class="settings-item">
-                        <span style="font-size: 14px;">Prioritize covered parking</span>
-                        <div class="toggle" onclick="this.classList.toggle('active')">
-                            <div class="toggle-slider"></div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-section-title">Accessibility Options</div>
+                    <div class="card" style="padding: 0;">
+                        <div class="settings-item">
+                            <span style="font-size: 14px;">Show ADA spots only</span>
+                            <div class="toggle" onclick="this.classList.toggle('active')">
+                                <div class="toggle-slider"></div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="settings-item">
-                        <span style="font-size: 14px;">Include shuttle options</span>
-                        <div class="toggle active" onclick="this.classList.toggle('active')">
-                            <div class="toggle-slider"></div>
+                        <div class="settings-item">
+                            <span style="font-size: 14px;">Prioritize covered parking</span>
+                            <div class="toggle" onclick="this.classList.toggle('active')">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+                        <div class="settings-item">
+                            <span style="font-size: 14px;">Include shuttle options</span>
+                            <div class="toggle active" onclick="this.classList.toggle('active')">
+                                <div class="toggle-slider"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <button class="btn btn-secondary" style="margin-top: 20px;">Edit Profile</button>
-                <button class="btn btn-secondary">Help & Support</button>
+                <button class="btn btn-secondary" onclick="showScreen('help-screen')">Help & FAQs</button>
             </div>
         </div>
 
         <!-- Bottom Navigation Bar -->
         <div class="nav-bar">
-            <div class="nav-item active" onclick="showScreen('home-screen')">
+            <div class="nav-item" onclick="showScreen('home-screen')">
                 <div class="nav-icon">🗺️</div>
                 <div class="nav-label">Map</div>
             </div>
@@ -1069,21 +1709,20 @@
     </div>
 
     <script>
+        let currentLot = '';
+        let currentLotType = '';
+
         function showScreen(screenId) {
-            // Hide all screens
             document.querySelectorAll('.screen').forEach(screen => {
                 screen.classList.remove('active');
             });
             
-            // Show selected screen
             document.getElementById(screenId).classList.add('active');
             
-            // Update nav bar
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
             });
             
-            // Scroll to top
             document.getElementById(screenId).scrollTop = 0;
         }
 
@@ -1099,8 +1738,27 @@
             showScreen('navigation-screen');
         }
 
-        function showLotDetail(lotName) {
-            showScreen('lot-detail-screen');
+        // NEW: Show confirmation modal before navigation
+        function showLotConfirmation(lotName, lotType) {
+            currentLot = lotName;
+            currentLotType = lotType;
+            document.getElementById('modal-lot-name').textContent = lotName;
+            document.getElementById('modal-lot-type').textContent = lotType;
+            document.getElementById('confirmation-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('confirmation-modal').classList.remove('active');
+        }
+
+        function confirmNavigation() {
+            closeModal();
+            showNavigation();
+        }
+
+        // NEW: Show error state demo
+        function showErrorDemo() {
+            showScreen('error-screen');
         }
 
         function showNotifications() {
@@ -1110,6 +1768,10 @@
         function showProfile() {
             showScreen('profile-screen');
         }
+
+        // Start with onboarding screen (or home screen for returning users)
+        // For demo purposes, we'll start with onboarding
+        showScreen('onboarding-screen');
     </script>
 </body>
 </html>
